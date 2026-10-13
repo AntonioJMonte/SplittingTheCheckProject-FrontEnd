@@ -1,4 +1,6 @@
 dist
 docs
+CLAUDE.md
+.superpowers
 src/api/generated
 package-lock.json
