@@ -13,6 +13,5 @@ export default defineConfig({
     env: { TZ: 'America/Sao_Paulo' },
     // Node 25 expõe um localStorage global sem métodos, que o Vitest não troca pelo do jsdom.
     execArgv: ['--no-experimental-webstorage'],
-    passWithNoTests: true,
   },
 })
