@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "typecheck": "tsc -b",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "api:gen": "orval"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
