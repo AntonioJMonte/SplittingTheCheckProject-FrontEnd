@@ -8,9 +8,12 @@ portfólio de back-end: MVP funcional, limpo e rápido, sem sofisticação visua
 - **O front nunca calcula dinheiro.** A API trafega valores como string com 2 casas ("1234.50"). O front só formata
   (`formatBRL`) e normaliza a entrada (`toApiAmount`). Nada de soma, divisão, `parseFloat` em contas nem decimal.js.
   Única exceção: `approxEqualShare` (prévia "≈ R$ 3,33 cada"), só para exibir.
-- **O front nunca reimplementa regra de domínio.** Saldos, transferências sugeridas e divisão vêm da API.
+- **O front nunca reimplementa regra de domínio.** Saldos, transferências sugeridas e divisão vêm da API. O front não
+  confere se as partes fecham o total nem se os percentuais somam 100: o 400 do back diz.
 - **O REST é a fonte da verdade; o socket só sinaliza.** Eventos disparam `invalidateQueries`; o payload nunca entra
-  no cache. Não escute `settlement_computed` (o back emite em todo GET de `/settlements/compute`).
+  no cache. Não escute `settlement_computed` (o back emite em todo GET de `/settlements/compute`) e não chame essa
+  rota. A cada `connect`, inclusive reconexões, emitir `join_group` e invalidar as queries do grupo. O cleanup só faz
+  `off` dos listeners: sem `disconnect` (só no logout). Regras completas em `docs/specs/telas.md`, seção 2.4.
 - **Não edite `src/api/generated/`.** Regenere com `npm run api:gen` (back rodando em `npm run dev`) e commite.
 - **Fora do escopo:** Next.js, Redux, Zustand, decimal.js, tema escuro, i18n, animações elaboradas. Pergunte antes.
 
@@ -30,7 +33,8 @@ Tailwind v4 + shadcn/ui · socket.io-client · Vitest + Testing Library · Verce
 Rode e mostre a saída real de `npx tsc -b`, `npm run lint`, `npm run test -- --run` e `npm run build`.
 
 ## Valores do back (confirmados em 2026-10-13)
-- API e WebSocket: `http://localhost:3333`. Swagger JSON: `/docs/json` (só fora de produção).
+- API e WebSocket: `http://localhost:3333` (`PORT=3333` no `.env` do back; sem ele, o padrão do back é 3000).
+  Swagger JSON: `/docs/json` (só fora de produção).
 - Handshake: `auth: { token }`. Falhas: `connect_error` com `TOKEN_EXPIRED` ou `UNAUTHORIZED`.
 - Sala: `socket.emit('join_group', groupId)` com o id como string pura. Não existe evento de saída.
 - Eventos escutados: `expense_created`, `expense_updated`, `expense_deleted`, `expense_categorized`,
