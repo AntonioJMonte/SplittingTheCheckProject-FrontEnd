@@ -31,7 +31,15 @@ export function RegisterPage() {
     try {
       await registerUser.mutateAsync({ data: { name, email, password, ...(phone ? { phone } : {}) } })
     } catch (error) {
-      setFormError(reportFormError(error, setError, fieldsNamed<RegisterValues>('name', 'email', 'password', 'phone')))
+      // O telefone é validado no domínio do back: o 400 vem sem issues, mas só pode ser dele quando foi preenchido.
+      setFormError(
+        reportFormError(
+          error,
+          setError,
+          fieldsNamed<RegisterValues>('name', 'email', 'password', 'phone'),
+          phone ? 'phone' : undefined,
+        ),
+      )
       return
     }
     try {
