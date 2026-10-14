@@ -3,8 +3,9 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' 
 /** "1234.50" (API) → "R$ 1.234,50". Só exibição: o Number nunca entra em conta. */
 export const formatBRL = (amount: string): string => brl.format(Number(amount))
 
-// Ponto só como separador de milhar, em grupos de 3 ("1.234,56"). "12.5" é recusado em vez de virar 125 (P-7).
-const PT_BR_AMOUNT = /^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/
+// Ponto só como separador de milhar, em grupos de 3 ("1.234,56"). "12.5" é recusado em vez de virar 125 (P-7), e
+// "0.500" em vez de virar 500: o primeiro grupo de milhar não começa com zero.
+const PT_BR_AMOUNT = /^([1-9]\d{0,2}(\.\d{3})+|\d+)(,\d{1,2})?$/
 
 export const isValidAmountInput = (input: string): boolean => PT_BR_AMOUNT.test(input.trim())
 

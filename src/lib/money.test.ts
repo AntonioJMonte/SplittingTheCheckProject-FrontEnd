@@ -43,7 +43,7 @@ describe('toApiAmount', () => {
     expect(toApiAmount(input)).toBe(expected)
   })
 
-  it.each(['abc', '12,345', '12.5', '1.23', '', '-5', '1,', 'R$ 10'])('recusa %s', (input) => {
+  it.each(['abc', '12,345', '12.5', '1.23', '', '-5', '1,', 'R$ 10', '0.500', '01.234'])('recusa %s', (input) => {
     expect(() => toApiAmount(input)).toThrow('Valor inválido')
   })
 })
