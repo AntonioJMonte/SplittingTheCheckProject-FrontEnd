@@ -1,4 +1,5 @@
 import { Navigate, type RouteObject } from 'react-router'
+import { AppLayout } from '@/app/AppLayout'
 import { GuestRoute } from '@/features/auth/GuestRoute'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
@@ -17,8 +18,13 @@ export const routes: RouteObject[] = [
   {
     element: <ProtectedRoute />,
     children: [
-      { path: '/groups', element: <GroupsPage /> },
-      { path: '/groups/:groupId', element: <GroupDetailPage /> },
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/groups', element: <GroupsPage /> },
+          { path: '/groups/:groupId', element: <GroupDetailPage /> },
+        ],
+      },
     ],
   },
   { path: '*', element: <Navigate to="/groups" replace /> },
