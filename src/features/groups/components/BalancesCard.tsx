@@ -1,10 +1,11 @@
 import { useGetGroupsGroupIdBalances } from '@/api/generated/endpoints/groups/groups'
 import { useGetGroupsGroupIdSettlements } from '@/api/generated/endpoints/settlements/settlements'
-import type { GroupMember, Transfer } from '@/api/types'
+import type { GroupMember, Settlement, Transfer } from '@/api/types'
 import { MoneyDisplay } from '@/components/MoneyDisplay'
 import { SectionError } from '@/components/section-error'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PendingSettlementsList } from '@/features/settlements/components/PendingSettlementsList'
 import { toApiError } from '@/lib/api-error'
 import { absoluteAmount, type BalanceTone, balanceTone } from '@/lib/money'
 import { useChangedKeys } from '@/lib/use-changed-keys'
@@ -23,9 +24,11 @@ interface BalancesCardProps {
   members: GroupMember[]
   myMemberId: string | undefined
   onPay?: (transfer: Transfer) => void
+  onAcknowledge?: (settlement: Settlement) => void
+  onViewPix?: (settlement: Settlement) => void
 }
 
-export function BalancesCard({ groupId, members, myMemberId, onPay }: BalancesCardProps) {
+export function BalancesCard({ groupId, members, myMemberId, onPay, onAcknowledge, onViewPix }: BalancesCardProps) {
   const balances = useGetGroupsGroupIdBalances(groupId)
   const pending = useGetGroupsGroupIdSettlements(groupId, { status: 'PENDING' })
   const changedBalances = useChangedKeys(balances.data?.memberBalances.map((b) => [b.memberId, b.balance] as const))
@@ -83,10 +86,20 @@ export function BalancesCard({ groupId, members, myMemberId, onPay }: BalancesCa
             pending={pending.data?.settlements ?? []}
             myMemberId={myMemberId}
             highlighted={changedTransfers}
-            onPay={onPay}
+            // Sem a lista de pendentes não dá para saber se o pagamento já foi registrado: Pagar espera por ela.
+            onPay={pending.data ? onPay : undefined}
           />
         )}
       </section>
+      {onAcknowledge && onViewPix ? (
+        <PendingSettlementsList
+          pending={pending.data?.settlements ?? []}
+          members={members}
+          myMemberId={myMemberId}
+          onAcknowledge={onAcknowledge}
+          onViewPix={onViewPix}
+        />
+      ) : null}
     </Card>
   )
 }
