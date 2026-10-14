@@ -29,6 +29,15 @@ describe('reportFormError', () => {
     expect(setError).not.toHaveBeenCalled()
   })
 
+  it('põe o erro de regra (400 sem issues) no campo indicado, quando há um', () => {
+    const setError = vi.fn()
+
+    expect(
+      reportFormError<Values>(httpError(400, { message: 'Telefone inválido: "abc"' }), setError, fieldsNamed<Values>('email'), 'password'),
+    ).toBeNull()
+    expect(setError).toHaveBeenCalledWith('password', { type: 'server', message: 'Telefone inválido: "abc"' })
+  })
+
   it('devolve a message da API quando é erro de regra', () => {
     expect(reportFormError<Values>(httpError(401, { message: 'Email ou senha incorretos.' }), vi.fn(), fieldsNamed<Values>('email'))).toBe(
       'Email ou senha incorretos.',

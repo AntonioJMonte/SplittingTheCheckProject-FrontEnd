@@ -35,12 +35,16 @@ export function CreateGroupDialog() {
     formState: { errors, isSubmitting },
   } = useForm<CreateGroupValues>({ resolver: zodResolver(createGroupSchema), defaultValues: { name: '', description: '' } })
 
+  function close() {
+    setOpen(false)
+    reset()
+    setFormError(null)
+  }
+
   function changeOpen(next: boolean) {
-    setOpen(next)
-    if (!next) {
-      reset()
-      setFormError(null)
-    }
+    if (next) setOpen(true)
+    // Fechar no meio do envio deixaria a resposta chegar num formulário já limpo.
+    else if (!isSubmitting) close()
   }
 
   const onSubmit = handleSubmit(async ({ name, description }) => {
@@ -49,7 +53,7 @@ export function CreateGroupDialog() {
       const { group } = await createGroup.mutateAsync({ data: { name, ...(description ? { description } : {}) } })
       toast.success('Grupo criado')
       void queryClient.invalidateQueries({ queryKey: getGetGroupsQueryKey() })
-      changeOpen(false)
+      close()
       navigate(`/groups/${group.id}`)
     } catch (error) {
       setFormError(reportFormError(error, setError, fieldsNamed<CreateGroupValues>('name', 'description')))

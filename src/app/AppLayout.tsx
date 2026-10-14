@@ -23,8 +23,8 @@ export function AppLayout() {
           <Link to="/groups" className="mr-auto text-2xl font-semibold">
             splittr
           </Link>
-          {me.data ? <span className="hidden text-sm sm:inline">{me.data.user.name}</span> : null}
-          <Button variant="ghost" size="sm" onClick={() => void logout()}>
+          {me.data ? <span className="hidden text-sm font-medium sm:inline">{me.data.user.name}</span> : null}
+          <Button variant="ghost" onClick={() => void logout()}>
             <LogOut aria-hidden="true" />
             Sair
           </Button>
