@@ -1,6 +1,18 @@
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import type { Socket } from 'socket.io-client'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { installSocketAuthRecovery } from './socket-auth'
+
+function refreshFailure(status: number) {
+  const config = { headers: {} } as InternalAxiosRequestConfig
+  return new AxiosError(`HTTP ${status}`, 'ERR_BAD_RESPONSE', config, undefined, {
+    status,
+    data: {},
+    statusText: String(status),
+    headers: {},
+    config,
+  })
+}
 
 function setup(refresh: () => Promise<string>) {
   const handlers = new Map<string, (error: Error) => void>()
@@ -24,15 +36,35 @@ describe('installSocketAuthRecovery', () => {
     expect(onSessionExpired).not.toHaveBeenCalled()
   })
 
-  it('encerra a sessão se a renovação falhar', async () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('encerra a sessão quando o back recusa a renovação', async () => {
     const { socket, onSessionExpired, fail } = setup(async () => {
-      throw new Error('refresh recusado')
+      throw refreshFailure(401)
     })
 
     fail('TOKEN_EXPIRED')
 
     await vi.waitFor(() => expect(onSessionExpired).toHaveBeenCalledTimes(1))
     expect(socket.connect).not.toHaveBeenCalled()
+  })
+
+  it('mantém a sessão e tenta reconectar mais tarde quando a renovação falha por rede ou 5xx', async () => {
+    vi.useFakeTimers()
+    const { socket, onSessionExpired, fail } = setup(async () => {
+      throw refreshFailure(503)
+    })
+
+    fail('TOKEN_EXPIRED')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(socket.connect).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(3000)
+
+    expect(socket.connect).toHaveBeenCalledTimes(1)
+    expect(onSessionExpired).not.toHaveBeenCalled()
   })
 
   it('encerra a sessão quando o token é inválido', () => {
