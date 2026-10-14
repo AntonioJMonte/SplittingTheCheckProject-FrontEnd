@@ -1,3 +1,53 @@
+import { useParams } from 'react-router'
+import { useGetGroupsGroupId } from '@/api/generated/endpoints/groups/groups'
+import { useGetUsersMe } from '@/api/generated/endpoints/users/users'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ExpenseList } from '@/features/expenses/components/ExpenseList'
+import { toApiError } from '@/lib/api-error'
+import { useGroupRealtime } from '@/realtime/use-group-realtime'
+import { useSocketConnected } from '@/realtime/use-socket-status'
+import { BalancesCard } from '../components/BalancesCard'
+import { GroupHeader } from '../components/GroupHeader'
+import { GroupUnavailable } from '../components/GroupUnavailable'
+import { MembersList } from '../components/MembersList'
+import { findMyMember } from '../group-view'
+
 export function GroupDetailPage() {
-  return <h1 className="text-2xl font-semibold">Grupo</h1>
+  const { groupId = '' } = useParams()
+  const group = useGetGroupsGroupId(groupId)
+  const me = useGetUsersMe()
+  const connected = useSocketConnected()
+  useGroupRealtime(groupId)
+
+  // Sem acesso, inexistente ou id inválido valem mesmo com dados em cache: quem foi removido com a tela aberta vê o 403
+  // no próximo refetch (spec, Tela 3). Rede e 5xx num refetch mantêm a tela.
+  const lostAccess = group.isError && [400, 403, 404].includes(toApiError(group.error).status ?? 0)
+  if (group.isError && (lostAccess || !group.data)) {
+    return <GroupUnavailable error={group.error} onRetry={() => void group.refetch()} />
+  }
+  if (group.isPending) {
+    return (
+      <div className="grid gap-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  const { name, description, members } = group.data.group
+  const myUserId = me.data?.user.id
+  const myMemberId = findMyMember(members, myUserId)?.id
+
+  return (
+    <div className="grid gap-6">
+      <GroupHeader name={name} description={description} connected={connected} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+        <BalancesCard groupId={groupId} members={members} myMemberId={myMemberId} />
+        <div className="grid gap-6">
+          <ExpenseList groupId={groupId} members={members} myMemberId={myMemberId} />
+          <MembersList groupId={groupId} members={members} myUserId={myUserId} />
+        </div>
+      </div>
+    </div>
+  )
 }
