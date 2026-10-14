@@ -42,11 +42,11 @@ export function AddMemberForm({ groupId }: { groupId: string }) {
       <fieldset className="flex gap-4 text-sm">
         <legend className="sr-only">Buscar por</legend>
         <label className="flex items-center gap-2">
-          <input type="radio" value="email" className="accent-primary" {...register('kind')} />
+          <input type="radio" value="email" className="accent-primary" {...register('kind', { deps: 'contact' })} />
           Email
         </label>
         <label className="flex items-center gap-2">
-          <input type="radio" value="phone" className="accent-primary" {...register('kind')} />
+          <input type="radio" value="phone" className="accent-primary" {...register('kind', { deps: 'contact' })} />
           Telefone
         </label>
       </fieldset>
