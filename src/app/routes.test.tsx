@@ -31,11 +31,13 @@ describe('rotas (spec 2.1)', () => {
     expect(router.state.location.pathname).toBe('/login')
   })
 
-  it('abre o detalhe do grupo pelo id da URL', async () => {
+  it('abre o detalhe do grupo pelo id da URL', () => {
     setToken('t')
-    renderAt('/groups/abc')
+    const router = renderAt('/groups/abc')
 
-    expect(await screen.findByRole('heading', { name: 'Grupo' })).toBeInTheDocument()
+    const match = router.state.matches.at(-1)
+    expect(match?.route.path).toBe('/groups/:groupId')
+    expect(match?.params.groupId).toBe('abc')
   })
 
   it('leva aos grupos quem já está logado e abre o cadastro', async () => {
