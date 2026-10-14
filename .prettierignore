@@ -1,0 +1,7 @@
+dist
+docs
+CLAUDE.md
+.superpowers
+src/components/ui
+src/api/generated
+package-lock.json
