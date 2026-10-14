@@ -4,6 +4,7 @@ import { Link, Outlet } from 'react-router'
 import { useGetUsersMe } from '@/api/generated/endpoints/users/users'
 import { Button } from '@/components/ui/button'
 import { useLogout } from '@/features/auth/use-logout'
+import { PixKeyDialog } from '@/features/profile/components/PixKeyDialog'
 import { toApiError } from '@/lib/api-error'
 
 export function AppLayout() {
@@ -24,6 +25,7 @@ export function AppLayout() {
             splittr
           </Link>
           {me.data ? <span className="hidden text-sm font-medium sm:inline">{me.data.user.name}</span> : null}
+          <PixKeyDialog />
           <Button variant="ghost" onClick={() => void logout()}>
             <LogOut aria-hidden="true" />
             Sair
