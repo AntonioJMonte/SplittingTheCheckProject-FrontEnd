@@ -18,7 +18,7 @@ export const SPLIT_METHODS = ['EQUAL', 'FIXED', 'PERCENTAGE'] as const
 
 const PERCENTAGE_INPUT = /^\d{1,3}(,\d{1,2})?$/
 
-const isPositiveAmountInput = (input: string) => isValidAmountInput(input) && toApiAmount(input) !== '0.00'
+export const isPositiveAmountInput = (input: string) => isValidAmountInput(input) && toApiAmount(input) !== '0.00'
 const isPositivePercentageInput = (input: string) => {
   const trimmed = input.trim()
   return PERCENTAGE_INPUT.test(trimmed) && !/^0+(,0+)?$/.test(trimmed)
