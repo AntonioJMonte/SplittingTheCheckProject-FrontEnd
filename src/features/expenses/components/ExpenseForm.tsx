@@ -14,8 +14,8 @@ import { toApiError } from '@/lib/api-error'
 import { todayInputValue } from '@/lib/dates'
 import { reportFormError } from '@/lib/form-errors'
 import { invalidateGroupQueries } from '@/lib/invalidate-group'
-import { approxEqualShare, isValidAmountInput, toApiAmount } from '@/lib/money'
-import { AUTO_CATEGORY, EXPENSE_CATEGORIES, type ExpenseFormValues, expenseFormSchema } from '../schemas'
+import { approxEqualShare, toApiAmount } from '@/lib/money'
+import { AUTO_CATEGORY, EXPENSE_CATEGORIES, type ExpenseFormValues, expenseFormSchema, isPositiveAmountInput } from '../schemas'
 import { fieldForIssuePath, toCreateExpenseBody } from '../to-create-expense-body'
 import { NativeSelect } from './NativeSelect'
 
@@ -57,7 +57,7 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
   const [amount, splitMethod, participants] = useWatch({ control, name: ['amount', 'splitMethod', 'participants'] })
   const selectedCount = participants.filter((participant) => participant.selected).length
   const preview =
-    splitMethod === 'EQUAL' && isValidAmountInput(amount) ? approxEqualShare(toApiAmount(amount), selectedCount) : null
+    splitMethod === 'EQUAL' && isPositiveAmountInput(amount) ? approxEqualShare(toApiAmount(amount), selectedCount) : null
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null)
@@ -81,10 +81,11 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
 
   return (
     <form noValidate onSubmit={onSubmit} className="grid gap-4">
+      <fieldset disabled={isSubmitting} className="grid min-w-0 gap-4">
       <FormField label="Descrição" htmlFor="expense-description" error={errors.description?.message}>
         <Input id="expense-description" aria-invalid={Boolean(errors.description)} {...register('description')} />
       </FormField>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4">
         <FormField label="Valor" htmlFor="expense-amount" hint="Ex.: 1.234,56" error={errors.amount?.message}>
           <Input
             id="expense-amount"
@@ -99,7 +100,7 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
           <Input id="expense-date" type="date" aria-invalid={Boolean(errors.occurredAt)} {...register('occurredAt')} />
         </FormField>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4">
         <FormField label="Pago por" htmlFor="expense-payer" error={errors.payerId?.message}>
           <NativeSelect id="expense-payer" {...register('payerId')}>
             {members.map((member) => (
@@ -137,8 +138,15 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
           {participants.map((participant, index) => {
             const name = memberName(members, participant.memberId)
             const selected = participant.selected
-            const rowError =
-              errors.participants?.[index]?.amount?.message ?? errors.participants?.[index]?.percentage?.message
+            // Só o erro do campo que está na tela: trocar a divisão ou desmarcar a pessoa tira o campo, e o erro vai junto.
+            const rowError = !selected
+              ? undefined
+              : splitMethod === 'FIXED'
+                ? errors.participants?.[index]?.amount?.message
+                : splitMethod === 'PERCENTAGE'
+                  ? errors.participants?.[index]?.percentage?.message
+                  : undefined
+            const rowErrorId = `participant-${index}-error`
             return (
               <li key={participant.memberId} className="grid gap-1">
                 <div className="flex min-h-9 items-center gap-3">
@@ -151,7 +159,8 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
                       aria-label={`Parte de ${name}`}
                       inputMode="decimal"
                       className="w-32 text-right tabular-nums"
-                      aria-invalid={Boolean(errors.participants?.[index]?.amount)}
+                      aria-invalid={Boolean(rowError)}
+                      aria-describedby={rowError ? rowErrorId : undefined}
                       {...register(`participants.${index}.amount`)}
                     />
                   ) : null}
@@ -160,20 +169,26 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
                       aria-label={`Percentual de ${name}`}
                       inputMode="decimal"
                       className="w-24 text-right tabular-nums"
-                      aria-invalid={Boolean(errors.participants?.[index]?.percentage)}
+                      aria-invalid={Boolean(rowError)}
+                      aria-describedby={rowError ? rowErrorId : undefined}
                       {...register(`participants.${index}.percentage`)}
                     />
                   ) : null}
                 </div>
-                {rowError ? <p className="text-sm text-destructive">{rowError}</p> : null}
+                {rowError ? (
+                  <p id={rowErrorId} className="text-sm text-destructive">
+                    {rowError}
+                  </p>
+                ) : null}
               </li>
             )
           })}
         </ul>
-        {errors.participants?.message ?? errors.participants?.root?.message ? (
+        {selectedCount === 0 && (errors.participants?.message ?? errors.participants?.root?.message) ? (
           <p className="text-sm text-destructive">{errors.participants?.message ?? errors.participants?.root?.message}</p>
         ) : null}
         {preview ? <p className="text-xs text-muted-foreground">{preview}</p> : null}
+      </fieldset>
       </fieldset>
       <DialogFooter>
         <DialogClose asChild>
