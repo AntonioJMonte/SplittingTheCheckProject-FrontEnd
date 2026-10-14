@@ -29,6 +29,7 @@ export function PixKeyDialog() {
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors },
   } = useForm<PixKeyValues>({ resolver: zodResolver(pixKeySchema), values: { pixKey: current } })
 
@@ -37,6 +38,7 @@ export function PixKeyDialog() {
       await updatePixKey.mutateAsync({ data: { pixKey } })
       toast.success(pixKey ? 'Chave Pix salva' : 'Chave Pix removida')
       await queryClient.invalidateQueries({ queryKey: getGetUsersMeQueryKey() })
+      // Só fecha: a prop `values` já leva o formulário à chave nova, e um reset aqui usaria a chave antiga.
       setOpen(false)
     } catch (error) {
       const message = reportFormError(error, setError, fieldsNamed<PixKeyValues>('pixKey'))
@@ -44,8 +46,14 @@ export function PixKeyDialog() {
     }
   }
 
+  // O cabeçalho nunca desmonta: ao fechar, o formulário volta para a chave salva, sem rascunho nem erro antigo.
+  function changeOpen(next: boolean) {
+    setOpen(next)
+    if (!next) reset({ pixKey: current })
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={changeOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost">
           Chave Pix

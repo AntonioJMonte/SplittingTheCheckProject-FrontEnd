@@ -21,6 +21,7 @@ export function PixCopyButton({ code }: { code: string }) {
       setCopied(true)
     } catch {
       // Sem permissão ou fora de HTTPS: o código fica selecionado para copiar à mão.
+      fieldRef.current?.focus()
       fieldRef.current?.select()
       toast.error('Não foi possível copiar. Selecione o código e copie manualmente.')
     }

@@ -36,6 +36,7 @@ describe('PixCopyButton', () => {
     await user.click(screen.getByRole('button', { name: 'Copiar código Pix' }))
 
     const field = screen.getByLabelText<HTMLTextAreaElement>('Código Pix copia-e-cola')
+    expect(field).toHaveFocus()
     expect([field.selectionStart, field.selectionEnd]).toEqual([0, CODE.length])
     expect(toast.error).toHaveBeenCalledWith('Não foi possível copiar. Selecione o código e copie manualmente.')
   })

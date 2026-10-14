@@ -92,13 +92,23 @@ export function BalancesCard({ groupId, members, myMemberId, onPay, onAcknowledg
         )}
       </section>
       {onAcknowledge && onViewPix ? (
-        <PendingSettlementsList
-          pending={pending.data?.settlements ?? []}
-          members={members}
-          myMemberId={myMemberId}
-          onAcknowledge={onAcknowledge}
-          onViewPix={onViewPix}
-        />
+        pending.isError && !pending.data ? (
+          // Sem a lista, o credor perderia o Confirmar recebimento em silêncio: a seção mostra o erro (spec, Tela 3).
+          <section aria-labelledby="pending-title" className="grid gap-2 border-t p-4">
+            <h2 id="pending-title" className="text-base font-semibold">
+              Aguardando confirmação
+            </h2>
+            <SectionError message={toApiError(pending.error).message} onRetry={() => void pending.refetch()} />
+          </section>
+        ) : (
+          <PendingSettlementsList
+            pending={pending.data?.settlements ?? []}
+            members={members}
+            myMemberId={myMemberId}
+            onAcknowledge={onAcknowledge}
+            onViewPix={onViewPix}
+          />
+        )
       ) : null}
     </Card>
   )

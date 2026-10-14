@@ -84,11 +84,14 @@ function SettleContent({ groupId, target, members, onClose }: SettleDialogProps 
         <FormAlert message={error} />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {error ? 'Fechar' : 'Cancelar'}
           </Button>
-          <Button disabled={registerPayment.isPending} onClick={() => void register(target.transfer)}>
-            {registerPayment.isPending ? 'Registrando…' : 'Registrar pagamento'}
-          </Button>
+          {/* Depois de 409/422 o valor desta tela ficou velho: reenviar repetiria o erro. A lista atrás já foi relida. */}
+          {error ? null : (
+            <Button disabled={registerPayment.isPending} onClick={() => void register(target.transfer)}>
+              {registerPayment.isPending ? 'Registrando…' : 'Registrar pagamento'}
+            </Button>
+          )}
         </DialogFooter>
       </>
     )
@@ -98,9 +101,11 @@ function SettleContent({ groupId, target, members, onClose }: SettleDialogProps 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Pagar com Pix</DialogTitle>
+        <DialogTitle>{settlement.pixCopyPaste ? 'Pagar com Pix' : 'Pagamento registrado'}</DialogTitle>
         <DialogDescription>
-          Pague com Pix copia-e-cola no app do seu banco. O acerto fica pendente até {creditor} confirmar o recebimento.
+          {settlement.pixCopyPaste
+            ? `Pague com Pix copia-e-cola no app do seu banco. O acerto fica pendente até ${creditor} confirmar o recebimento.`
+            : `O acerto fica pendente até ${creditor} confirmar o recebimento.`}
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-1">
@@ -111,7 +116,7 @@ function SettleContent({ groupId, target, members, onClose }: SettleDialogProps 
         <PixCopyButton code={settlement.pixCopyPaste} />
       ) : (
         <p className="max-w-prose text-sm">
-          {creditor} não cadastrou chave Pix. Combine o pagamento por fora. O acerto fica pendente até {creditor} confirmar.
+          {creditor} não cadastrou chave Pix. Combine o pagamento por fora.
         </p>
       )}
       <DialogFooter>
