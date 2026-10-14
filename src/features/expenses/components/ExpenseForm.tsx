@@ -9,6 +9,7 @@ import { FormAlert, FormField } from '@/components/form-field'
 import { Button } from '@/components/ui/button'
 import { DialogClose, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { memberName } from '@/features/groups/group-view'
 import { toApiError } from '@/lib/api-error'
 import { todayInputValue } from '@/lib/dates'
 import { reportFormError } from '@/lib/form-errors'
@@ -131,20 +132,23 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
           ))}
         </div>
         <ul className="grid gap-2">
-          {members.map((member, index) => {
-            const selected = participants[index]?.selected ?? false
+          {/* As linhas vêm do formulário, não da lista viva de membros: um member_added ou member_removed com o diálogo
+              aberto não pode trocar a pessoa de uma linha. */}
+          {participants.map((participant, index) => {
+            const name = memberName(members, participant.memberId)
+            const selected = participant.selected
             const rowError =
               errors.participants?.[index]?.amount?.message ?? errors.participants?.[index]?.percentage?.message
             return (
-              <li key={member.id} className="grid gap-1">
+              <li key={participant.memberId} className="grid gap-1">
                 <div className="flex min-h-9 items-center gap-3">
                   <label className="flex flex-1 items-center gap-2">
                     <input type="checkbox" className="size-4 accent-primary" {...register(`participants.${index}.selected`)} />
-                    {member.name}
+                    {name}
                   </label>
                   {splitMethod === 'FIXED' && selected ? (
                     <Input
-                      aria-label={`Parte de ${member.name}`}
+                      aria-label={`Parte de ${name}`}
                       inputMode="decimal"
                       className="w-32 text-right tabular-nums"
                       aria-invalid={Boolean(errors.participants?.[index]?.amount)}
@@ -153,7 +157,7 @@ export function ExpenseForm({ groupId, members, myUserId, onDone }: ExpenseFormP
                   ) : null}
                   {splitMethod === 'PERCENTAGE' && selected ? (
                     <Input
-                      aria-label={`Percentual de ${member.name}`}
+                      aria-label={`Percentual de ${name}`}
                       inputMode="decimal"
                       className="w-24 text-right tabular-nums"
                       aria-invalid={Boolean(errors.participants?.[index]?.percentage)}
