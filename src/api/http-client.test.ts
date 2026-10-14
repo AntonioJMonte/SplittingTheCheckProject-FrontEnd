@@ -27,6 +27,17 @@ function setup(handler: (config: InternalAxiosRequestConfig) => Reply, refreshRe
 
 const authorization = (config: InternalAxiosRequestConfig) => config.headers.get('Authorization')
 
+function refreshFailure(status: number) {
+  const config = { headers: {} } as InternalAxiosRequestConfig
+  return new AxiosError(`HTTP ${status}`, 'ERR_BAD_RESPONSE', config, undefined, {
+    status,
+    data: {},
+    statusText: String(status),
+    headers: {},
+    config,
+  })
+}
+
 describe('installAuthInterceptors', () => {
   it('envia o token atual no Authorization', async () => {
     const { instance, seen } = setup(() => ({ status: 200 }))
@@ -57,16 +68,32 @@ describe('installAuthInterceptors', () => {
     expect(onSessionExpired).not.toHaveBeenCalled()
   })
 
-  it('encerra a sessão quando o refresh falha', async () => {
+  it('encerra a sessão quando o back recusa o refresh', async () => {
     const { instance, onSessionExpired } = setup(
       () => ({ status: 401 }),
       async () => {
-        throw new Error('refresh recusado')
+        throw refreshFailure(401)
       },
     )
 
     await expect(instance.get('/groups')).rejects.toMatchObject({ response: { status: 401 } })
     expect(onSessionExpired).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['rede', () => new AxiosError('Network Error', 'ERR_NETWORK')],
+    ['5xx', () => refreshFailure(503)],
+    ['429', () => refreshFailure(429)],
+  ])('mantém a sessão quando o refresh falha por %s', async (_, failure) => {
+    const { instance, onSessionExpired } = setup(
+      () => ({ status: 401 }),
+      async () => {
+        throw failure()
+      },
+    )
+
+    await expect(instance.get('/groups')).rejects.toMatchObject({ response: { status: 401 } })
+    expect(onSessionExpired).not.toHaveBeenCalled()
   })
 
   it('não entra em laço se a requisição repetida também volta 401', async () => {

@@ -1,4 +1,4 @@
-import Axios from 'axios'
+import Axios, { isAxiosError } from 'axios'
 import { setToken } from '@/features/auth/auth-store'
 
 export type RefreshSession = () => Promise<string>
@@ -32,3 +32,6 @@ export const requestRefreshToken = (): Promise<string> =>
   }).then((response) => response.data.accessToken)
 
 export const refreshSession = createRefreshSession(requestRefreshToken, setToken)
+
+/** Só a recusa do back (401 no /refresh) encerra a sessão; rede, 5xx e 429 não provam que ela acabou. */
+export const isSessionRejected = (error: unknown): boolean => isAxiosError(error) && error.response?.status === 401
