@@ -23,12 +23,12 @@ export function createRefreshSession(
   }
 }
 
-// Axios puro, fora do cliente com interceptors: um 401 aqui não pode disparar outro refresh.
-export const refreshSession = createRefreshSession(
-  () =>
-    Axios.post<{ accessToken: string }>('/refresh', null, {
-      baseURL: import.meta.env.VITE_API_URL,
-      withCredentials: true,
-    }).then((response) => response.data.accessToken),
-  setToken,
-)
+// Axios puro, fora do cliente com interceptors: um 401 aqui não pode disparar outro refresh. Sem corpo (`undefined`, não
+// `null`): com `null` o XHR manda Content-Type x-www-form-urlencoded, que o Fastify do back recusa com 415.
+export const requestRefreshToken = (): Promise<string> =>
+  Axios.post<{ accessToken: string }>('/refresh', undefined, {
+    baseURL: import.meta.env.VITE_API_URL,
+    withCredentials: true,
+  }).then((response) => response.data.accessToken)
+
+export const refreshSession = createRefreshSession(requestRefreshToken, setToken)

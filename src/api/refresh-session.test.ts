@@ -1,5 +1,6 @@
+import Axios, { type InternalAxiosRequestConfig } from 'axios'
 import { describe, expect, it, vi } from 'vitest'
-import { createRefreshSession } from './refresh-session'
+import { createRefreshSession, requestRefreshToken } from './refresh-session'
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -42,5 +43,25 @@ describe('createRefreshSession', () => {
     await expect(Promise.all([refresh(), refresh()])).rejects.toThrow('401')
     expect(storeToken).not.toHaveBeenCalled()
     await expect(refresh()).resolves.toBe('t2')
+  })
+})
+
+describe('requestRefreshToken', () => {
+  it('pede o token novo sem corpo, para o XHR não mandar o Content-Type que o back recusa com 415', async () => {
+    const seen: InternalAxiosRequestConfig[] = []
+    const original = Axios.defaults.adapter
+    Axios.defaults.adapter = async (config) => {
+      seen.push(config)
+      return { data: { accessToken: 'novo' }, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    try {
+      await expect(requestRefreshToken()).resolves.toBe('novo')
+    } finally {
+      Axios.defaults.adapter = original
+    }
+
+    expect(seen[0]).toMatchObject({ url: '/refresh', method: 'post', withCredentials: true })
+    // Com `null`, o adaptador XHR mantém Content-Type x-www-form-urlencoded e o Fastify responde 415.
+    expect(seen[0].data).toBeUndefined()
   })
 })
