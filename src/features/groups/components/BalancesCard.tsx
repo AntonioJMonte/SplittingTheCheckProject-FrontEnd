@@ -72,7 +72,11 @@ export function BalancesCard({ groupId, members, myMemberId, onPay }: BalancesCa
         <h2 id="transfers-title" className="text-base font-semibold">
           Quem paga quem
         </h2>
-        {balances.data ? (
+        {balances.isPending ? (
+          <Skeleton className="h-6 w-full" />
+        ) : !balances.data ? (
+          <SectionError message={toApiError(balances.error).message} onRetry={() => void balances.refetch()} />
+        ) : (
           <TransfersList
             transfers={balances.data.transfers}
             members={members}
@@ -81,8 +85,6 @@ export function BalancesCard({ groupId, members, myMemberId, onPay }: BalancesCa
             highlighted={changedTransfers}
             onPay={onPay}
           />
-        ) : (
-          <Skeleton className="h-6 w-full" />
         )}
       </section>
     </Card>
