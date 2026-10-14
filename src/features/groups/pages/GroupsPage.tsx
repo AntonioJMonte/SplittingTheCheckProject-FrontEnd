@@ -21,7 +21,8 @@ function GroupsContent() {
       </ul>
     )
   }
-  if (isError) return <SectionError message={toApiError(error).message} onRetry={() => void refetch()} />
+  // Um refetch em segundo plano que falha mantém `data`: a lista já carregada continua na tela.
+  if (isError && !data) return <SectionError message={toApiError(error).message} onRetry={() => void refetch()} />
   if (data.groups.length === 0) {
     return (
       <div className="grid gap-3 p-4">
@@ -53,7 +54,7 @@ function GroupsContent() {
 
 export function GroupsPage() {
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-6">
+    <div className="grid w-full max-w-2xl gap-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Seus grupos</h1>
         <CreateGroupDialog />
