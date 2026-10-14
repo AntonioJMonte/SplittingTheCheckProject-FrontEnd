@@ -1,7 +1,7 @@
 import Axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 import { getToken } from '@/features/auth/auth-store'
 import { expireSession } from '@/features/auth/session-expired'
-import { refreshSession } from './refresh-session'
+import { isSessionRejected, refreshSession } from './refresh-session'
 
 export interface AuthInterceptorDeps {
   getToken: () => string | null
@@ -30,8 +30,8 @@ export function installAuthInterceptors(instance: AxiosInstance, deps: AuthInter
     config._retried = true
     try {
       await deps.refresh()
-    } catch {
-      deps.onSessionExpired()
+    } catch (refreshError) {
+      if (isSessionRejected(refreshError)) deps.onSessionExpired()
       throw error
     }
     return instance(config)
